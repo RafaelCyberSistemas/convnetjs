@@ -48,7 +48,7 @@ jobs:
     needs: codeql
     if: always()
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
     steps:
       - name: Checkout repository
@@ -68,6 +68,22 @@ jobs:
         with:
           name: security-report
           path: security-report.md
+
+      - name: Create automatic security report pull request
+        if: github.event_name != 'pull_request'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "docs: update automated security report"
+          title: "docs: update automated security report"
+          body: |
+            This pull request was generated automatically by the DevSecOps Security Pipeline.
+
+            It updates the generated `security-report.md` file from the latest CodeQL SARIF results.
+          branch: automated/security-report
+          base: ${{ github.ref_name }}
+          add-paths: security-report.md
+          labels: security, automated-pr
 
       - name: Comment on pull request
         if: github.event_name == 'pull_request'
